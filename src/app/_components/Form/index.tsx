@@ -1,9 +1,8 @@
 "use client";
-import { Form, Button } from "antd";
-
+import { Form } from "antd";
 import { getFormItemProps } from "./utils";
-
 import FormItems from "./items";
+import React from "react";
 
 export type FormItem = {
   type: string;
@@ -17,10 +16,14 @@ export type FormPropsType = {
   config: FormConfig;
 };
 
-export default ({ items, config }: FormPropsType) => {
+export default React.forwardRef(({ items, config }: FormPropsType, ref) => {
   const [form] = Form.useForm();
 
   const FormItem = Form.Item;
+
+  React.useImperativeHandle(ref, () => ({
+    form,
+  }));
 
   return (
     <Form form={form} {...config} className="w-full">
@@ -35,4 +38,4 @@ export default ({ items, config }: FormPropsType) => {
       })}
     </Form>
   );
-};
+});

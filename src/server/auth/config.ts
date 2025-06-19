@@ -1,6 +1,6 @@
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import { type DefaultSession, type NextAuthConfig } from "next-auth";
-import DiscordProvider from "next-auth/providers/discord";
+import CredentialsProvider from "next-auth/providers/credentials";
 
 import { db } from "~/server/db";
 
@@ -13,26 +13,51 @@ import { db } from "~/server/db";
 declare module "next-auth" {
   interface Session extends DefaultSession {
     user: {
-      id: string;
-      // ...other properties
-      // role: UserRole;
+      id: number;
+      [key: string]: any; // Allows for additional properties on the user object
     } & DefaultSession["user"];
   }
-
-  // interface User {
-  //   // ...other properties
-  //   // role: UserRole;
-  // }
 }
 
 /**
  * Options for NextAuth.js used to configure adapters, providers, callbacks, etc.
- *
  * @see https://next-auth.js.org/configuration/options
  */
+
 export const authConfig = {
   providers: [
-    DiscordProvider,
+    // DiscordProvider,
+
+    CredentialsProvider({
+      name: "Credentials",
+      credentials: {
+        username: {},
+        password: {},
+      },
+      async authorize(credentials: any, req) {
+        const user = await db.sysUser.findFirst({
+          where: {
+            user_name: credentials?.username,
+            password: credentials?.password,
+          },
+        });
+
+        console.log(user, "user");
+
+        if (user) {
+          // Convert id (and other bigint fields if needed) to string
+          return {
+            ...user,
+            id: user.id?.toString(),
+            tenant_id: user.tenant_id?.toString?.() ?? null,
+            dept_id: user.dept_id?.toString?.() ?? null,
+          };
+        }
+
+        return null;
+      },
+    }),
+
     /**
      * ...add more providers here.
      *
@@ -45,12 +70,20 @@ export const authConfig = {
   ],
   adapter: PrismaAdapter(db),
   callbacks: {
-    session: ({ session, user }) => ({
-      ...session,
-      user: {
-        ...session.user,
-        id: user.id,
-      },
-    }),
+    session: ({ session, user }) => {
+      console.log("session", session);
+      console.log("user", user);
+      return {
+        ...session,
+        user: { ...session.user, id: user.id },
+      };
+    },
+  },
+  pages: {
+    signIn: "/auth/signin",
+    // signOut: "/auth/signout",
+    // error: "/auth/error",
+    // verifyRequest: "/auth/verify-request",
+    // newUser: null, // Will disable the new account creation screen
   },
 } satisfies NextAuthConfig;
