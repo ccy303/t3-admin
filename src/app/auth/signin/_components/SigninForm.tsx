@@ -1,6 +1,7 @@
 "use client";
 
 import { signIn } from "next-auth/react";
+import { useSearchParams } from "next/navigation";
 
 import { useRef } from "react";
 import { Button } from "antd";
@@ -9,6 +10,8 @@ import Form from "~/app/_components/Form";
 
 export default () => {
   const formRef = useRef<any>(null);
+  const searchParams = useSearchParams();
+
   const items = useRef([
     {
       type: "input",
@@ -33,7 +36,11 @@ export default () => {
 
   const singnin = async () => {
     const res = await formRef.current.form.validateFields();
-    signIn("credentials", res);
+    signIn("credentials", {
+      ...res,
+      redirect: true,
+      redirectTo: searchParams.get("callbackUrl") || "/",
+    });
   };
 
   return (

@@ -1,4 +1,4 @@
-import { PrismaAdapter } from "@auth/prisma-adapter";
+// import { PrismaAdapter } from "@auth/prisma-adapter";
 import { type DefaultSession, type NextAuthConfig } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 
@@ -11,11 +11,14 @@ import { db } from "~/server/db";
  * @see https://next-auth.js.org/getting-started/typescript#module-augmentation
  */
 declare module "next-auth" {
-  interface Session extends DefaultSession {
-    user: {
-      id: number;
-      [key: string]: any; // Allows for additional properties on the user object
-    } & DefaultSession["user"];
+  interface User {
+    id?: string | undefined; // Use string if you convert bigint to string
+    user_name: string | null;
+    // Add other fields as necessary
+  }
+
+  interface Session {
+    user: User & DefaultSession["user"];
   }
 }
 
@@ -27,7 +30,6 @@ declare module "next-auth" {
 export const authConfig = {
   providers: [
     // DiscordProvider,
-
     CredentialsProvider({
       name: "Credentials",
       credentials: {
@@ -42,15 +44,11 @@ export const authConfig = {
           },
         });
 
-        console.log(user, "user");
-
         if (user) {
           // Convert id (and other bigint fields if needed) to string
           return {
             ...user,
-            id: user.id?.toString(),
-            tenant_id: user.tenant_id?.toString?.() ?? null,
-            dept_id: user.dept_id?.toString?.() ?? null,
+            id: user.id.toString(), // Ensure id is a string
           };
         }
 
@@ -68,15 +66,24 @@ export const authConfig = {
      * @see https://next-auth.js.org/providers/github
      */
   ],
-  adapter: PrismaAdapter(db),
+  // adapter: PrismaAdapter(db),
   callbacks: {
-    session: ({ session, user }) => {
-      console.log("session", session);
-      console.log("user", user);
-      return {
-        ...session,
-        user: { ...session.user, id: user.id },
-      };
+    authorized: async ({ auth }) => {
+      return !!auth;
+      // You can add custom logic here to check if the user is authorized
+      // For example, you can check if the user has a specific role or permission
+      // For now, we will just return true to allow all authenticated users
+    },
+    // session: async ({ session, token }) => {
+    //   // console.log("session", session);
+    //   // console.log("session.user", session.user);
+    //   // console.log("token", token);
+    // },
+    jwt: async ({ user }) => {
+      console.log("user in jwt callback", user);
+      // if (account) {
+      //   token.accessToken = account.access_token;
+      // }
     },
   },
   pages: {
