@@ -1,6 +1,6 @@
 /** @type {import('prettier').Config & import('prettier-plugin-tailwindcss').PluginOptions} */
 export default {
   plugins: ["prettier-plugin-tailwindcss"],
-  printWidth: 150,
+  printWidth: 100,
   tabWidth: 4,
 };

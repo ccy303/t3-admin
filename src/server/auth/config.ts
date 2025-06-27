@@ -1,6 +1,7 @@
 // import { PrismaAdapter } from "@auth/prisma-adapter";
-import { type DefaultSession, type NextAuthConfig } from "next-auth";
+import { type DefaultSession, type NextAuthConfig, type User } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
+import { TRPCError } from "@trpc/server";
 
 import { db } from "~/server/db";
 
@@ -11,14 +12,10 @@ import { db } from "~/server/db";
  * @see https://next-auth.js.org/getting-started/typescript#module-augmentation
  */
 declare module "next-auth" {
-    interface User {
-        id?: string | undefined; // Use string if you convert bigint to string
-        user_name: string | null;
-        // Add other fields as necessary
-    }
+    interface User {}
 
     interface Session {
-        user: User & DefaultSession["user"];
+        user: DefaultSession["user"] & User;
     }
 }
 
@@ -36,7 +33,7 @@ export const authConfig = {
                 username: {},
                 password: {},
             },
-            async authorize(credentials: any, req) {
+            async authorize(credentials: any, req, ...arg) {
                 const user = await db.sysUser.findFirst({
                     where: {
                         user_name: credentials?.username,
@@ -44,16 +41,16 @@ export const authConfig = {
                     },
                 });
 
-                if (user) {
-                    const { password, ...other } = user;
-                    // Convert id (and other bigint fields if needed) to string
-                    return {
-                        ...other,
-                        id: user.id.toString(), // Ensure id is a string
-                    };
+                if (!user) {
+                    return null;
                 }
 
-                return null;
+                const { password, ...other } = user;
+                // Convert id (and other bigint fields if needed) to string
+                return {
+                    ...other,
+                    id: user.id.toString(), // Ensure id is a string
+                };
             },
         }),
 
@@ -75,13 +72,15 @@ export const authConfig = {
             // For example, you can check if the user has a specific role or permission
             // For now, we will just return true to allow all authenticated users
         },
-        // session: async ({ session, token }) => {
-        //   // console.log("session", session);
-        //   // console.log("session.user", session.user);
-        //   // console.log("token", token);
-        // },
+        session: async ({ session, token }) => {
+            session.user = token.user as any;
+            return session;
+        },
         jwt: async ({ token, user }) => {
-            token.user = user;
+            // 如果 user 对象存在，说明是用户登录时调用
+            if (user) {
+                token.user = user;
+            }
             return token;
         },
     },
