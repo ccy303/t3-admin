@@ -6,7 +6,13 @@ import { Geist } from "next/font/google";
 import { env } from "~/env";
 import { TRPCReactProvider } from "~/trpc/react";
 import { AntdRegistry } from "@ant-design/nextjs-registry";
+import { NuqsAdapter } from "nuqs/adapters/next/app";
+
 import "@ant-design/v5-patch-for-react-19";
+import zhCN from "antd/locale/zh_CN";
+// import "dayjs/locale/zh-cn";
+
+import { ConfigProvider } from "antd";
 
 export const metadata: Metadata = {
     title: env.NEXT_PUBLIC_SYSTEM_TITLE,
@@ -21,10 +27,13 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <html lang="en" className={`${geist.variable}`}>
             <body>
                 <TRPCReactProvider>
-                    <AntdRegistry>
-                        <div>1234</div>
-                        {children}
-                    </AntdRegistry>
+                    <NuqsAdapter>
+                        <AntdRegistry>
+                            <ConfigProvider componentSize="middle" locale={zhCN}>
+                                {children}
+                            </ConfigProvider>
+                        </AntdRegistry>
+                    </NuqsAdapter>
                 </TRPCReactProvider>
             </body>
         </html>

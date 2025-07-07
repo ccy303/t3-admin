@@ -1,7 +1,6 @@
 // import { PrismaAdapter } from "@auth/prisma-adapter";
 import { type DefaultSession, type NextAuthConfig, type User } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
-import { TRPCError } from "@trpc/server";
 
 import { db } from "~/server/db";
 
@@ -36,7 +35,7 @@ export const authConfig = {
             async authorize(credentials: any, req, ...arg) {
                 const user = await db.sysUser.findFirst({
                     where: {
-                        user_name: credentials?.username,
+                        user_name: credentials?.user_name,
                         password: credentials?.password,
                     },
                 });

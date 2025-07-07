@@ -7,7 +7,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
             <Header>Header</Header>
             <Layout>
                 <Sider>Sider</Sider>
-                <Content className="overflow-auto p-[10px]">{children}</Content>
+                <Content className="overflow-auto p-[20px]">{children}</Content>
             </Layout>
         </Layout>
     );

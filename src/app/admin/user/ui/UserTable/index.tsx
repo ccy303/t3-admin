@@ -1,0 +1,55 @@
+"use client";
+import TableList, { type TableListConfig } from "~/app/_components/TableList";
+import { api } from "~/trpc/react";
+
+export default function UserTable(props: any) {
+  const config: TableListConfig = {
+    tableProps: {
+      size: "middle",
+    },
+    module: "user",
+    modalWidth: 1000,
+    fieldsForm: {
+      labelCol: { span: 3 },
+      fields: [
+        [
+          { label: "用户名", type: "input", name: "user_name", required: true, table: true },
+          { label: "用户名", type: "input", name: "user_name", required: true, table: true },
+        ],
+        { label: "用户名", type: "input", name: "user_name", required: true, table: true },
+        { label: "昵称", type: "input", name: "nick_name", required: true, table: true },
+        { label: "手机号", type: "input", name: "phone_number", required: true, table: true },
+        { label: "邮箱", type: "input", name: "email", required: true, table: true },
+      ],
+    },
+    // actions: [
+    //   "edit",
+    //   "view",
+    //   "delete",
+    //   {
+    //     type: "other",
+    //     text: "其他按钮",
+    //   },
+    // ],
+    actions: (row) => {
+      return [
+        "edit",
+        "view",
+        "delete",
+        {
+          type: "other",
+          text: "其他按钮",
+        },
+      ];
+    },
+    tools: () => {
+      return ["add", "delete", "export"];
+    },
+  };
+
+  return (
+    <div>
+      <TableList config={config} />
+    </div>
+  );
+}

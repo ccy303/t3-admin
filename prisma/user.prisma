@@ -8,7 +8,7 @@ model SysUser {
   user_type    String?   @default("sys_user") @db.VarChar(10)
   email        String?   @default("") @db.VarChar(200)
   phone_number String?   @default("") @db.VarChar(200)
-  sex          Int?  @default(0)
+  sex          Int?      @default(0)
   avatar       String?
   password     String?   @default("") @db.VarChar(100)
   status       String?   @default("0") @db.Char(1)
