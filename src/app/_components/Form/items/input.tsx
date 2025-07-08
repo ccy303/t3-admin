@@ -1,13 +1,16 @@
 import { Input as AntdInput } from "antd";
 
 export const Input = (props: any) => {
-  return <AntdInput {...props} />;
+  const { readOnly, value } = props;
+  return <>{readOnly ? <span>{value}</span> : <AntdInput {...props} />} </>;
 };
 
 export const Password = (props: any) => {
-  return <AntdInput.Password {...props} />;
+  const { readOnly, value } = props;
+  return <>{readOnly ? <span>{value}</span> : <AntdInput.Password {...props} />} </>;
 };
 
 export const Textarea = (props: any) => {
-  return <AntdInput.TextArea {...props} />;
+  const { readOnly, value } = props;
+  return <>{readOnly ? <span>{value}</span> : <AntdInput.TextArea {...props} />} </>;
 };

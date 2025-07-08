@@ -13,14 +13,14 @@ import Form from "~/app/_components/Form";
 
 import { api } from "~/trpc/react";
 
-import { getTableColumn, getTableActions } from "~/utils/tableList";
+import { getTableColumn, getTableActions, getTableFormItems } from "~/utils/tableList";
 
 export type TableListField = {
   table?: boolean | TableColumnProps;
 } & FormItem;
 
-export type TableListFieldsForm = {
-  fields: (TableListField[] | TableListField[])[];
+export type TableListformFields = {
+  items: Array<TableListField | TableListField[]>;
 } & FormProps;
 
 export type Action =
@@ -36,7 +36,7 @@ export type Action =
 
 export type TableListConfig = {
   tableProps?: TableProps;
-  fieldsForm: TableListFieldsForm;
+  formFields: TableListformFields;
   actions?: Action[] | ((row: any) => Action[]);
   tools?: any;
   module: string;
@@ -47,33 +47,6 @@ export type TableListProps = {
   config: TableListConfig;
 };
 
-const asdasd: (TableListField | TableListField[])[] = [
-  [
-    { label: "用户名", type: "input", name: "user_name", required: true, table: true },
-    { label: "用户名", type: "input", name: "user_name", required: true, table: true },
-  ],
-  { label: "用户名", type: "input", name: "user_name", required: true, table: true },
-  { label: "昵称", type: "input", name: "nick_name", required: true, table: true },
-  { label: "手机号", type: "input", name: "phone_number", required: true, table: true },
-  { label: "邮箱", type: "input", name: "email", required: true, table: true },
-];
-
-const asd: TableListConfig = {
-  module: "1",
-  fieldsForm: {
-    fields: [
-      [
-        { label: "用户名", type: "input", name: "user_name", required: true, table: true },
-        { label: "用户名", type: "input", name: "user_name", required: true, table: true },
-      ],
-      { label: "用户名", type: "input", name: "user_name", required: true, table: true },
-      { label: "昵称", type: "input", name: "nick_name", required: true, table: true },
-      { label: "手机号", type: "input", name: "phone_number", required: true, table: true },
-      { label: "邮箱", type: "input", name: "email", required: true, table: true },
-    ],
-  },
-};
-
 export default React.forwardRef(({ config }: Readonly<TableListProps>, ref) => {
   const { tableProps, module, actions, modalWidth } = config;
 
@@ -81,9 +54,11 @@ export default React.forwardRef(({ config }: Readonly<TableListProps>, ref) => {
   const [pageNum, setPageNum] = useQueryState("pageNum", parseAsInteger.withDefault(1));
   const [pageSize, setPageSize] = useQueryState("pageSize", parseAsInteger.withDefault(10));
 
+  const [targetAction, setTargetAction] = useState<any>(null);
+
   const modal = useRef<any>(null);
 
-  const columns = getTableColumn(config.fieldsForm.fields);
+  const columns = getTableColumn(config.formFields.items);
 
   const apiUtils = api.useUtils();
 
@@ -99,19 +74,8 @@ export default React.forwardRef(({ config }: Readonly<TableListProps>, ref) => {
   // -------------modal end-------------
 
   // -------------modal form begin-------------
-  const { fields, ...formConfig } = config.fieldsForm;
-  const modalFormItems = fields.map((it) => {
-    const { table, required, ...other } = it;
-    if (required) {
-      other.rules && Array.isArray(other.rules)
-        ? other.rules.push({
-            required: true,
-            message: `${it.label}不能为空`,
-          })
-        : (other.rules = [{ required: true, message: `${it.label}不能为空` }]);
-    }
-    return other;
-  });
+  const { items, ...formConfig } = config.formFields;
+  const modalFormItems = getTableFormItems(items);
   // -------------modal form end-------------
 
   // -------------FormInstance-------------
@@ -126,6 +90,7 @@ export default React.forwardRef(({ config }: Readonly<TableListProps>, ref) => {
       icon: <RiEditLine size={14} />,
       async handle(row: any) {
         setModalTitle("编辑");
+        setTargetAction("edit");
         const { id } = row;
         modal.current.open();
         const data = await apiUtils.user.query.fetch({ id });
@@ -139,8 +104,15 @@ export default React.forwardRef(({ config }: Readonly<TableListProps>, ref) => {
       text: "查看",
       color: "primary",
       icon: <RiEyeLine size={14} />,
-      handle(row: any) {
-        console.log(row);
+      async handle(row: any) {
+        setModalTitle("查看");
+        setTargetAction("view");
+        const { id } = row;
+        modal.current.open();
+        const data = await apiUtils.user.query.fetch({ id });
+        setTimeout(() => {
+          form.setFieldsValue(data);
+        });
       },
     },
     delete: {
@@ -153,6 +125,7 @@ export default React.forwardRef(({ config }: Readonly<TableListProps>, ref) => {
       },
     },
   }).current;
+
   if (actions) {
     columns.push({
       title: "操作",
@@ -228,6 +201,7 @@ export default React.forwardRef(({ config }: Readonly<TableListProps>, ref) => {
    * modal form submit handler
    */
   const handleSubmit = async () => {
+    if (targetAction == "view") return;
     const data = await form.validateFields();
     console.log(data);
   };
@@ -236,7 +210,7 @@ export default React.forwardRef(({ config }: Readonly<TableListProps>, ref) => {
     <>
       {contextHolder}
       <Table
-        key="id"
+        rowKey="id"
         loading={status === "pending"}
         size="middle"
         dataSource={data?.rows}
@@ -257,7 +231,10 @@ export default React.forwardRef(({ config }: Readonly<TableListProps>, ref) => {
         columns={columns}
       />
       <Modal width={modalWidth} title={modalTitle} ref={modal} onOk={handleSubmit}>
-        <Form items={modalFormItems} config={{ ...formConfig, form }} />
+        <Form
+          items={modalFormItems}
+          config={{ readOnly: targetAction == "view", ...formConfig, form }}
+        />
       </Modal>
     </>
   );

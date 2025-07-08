@@ -1,7 +1,11 @@
 import type { TableColumnProps } from "antd";
-import type { TableListFields, Action } from "~/app/_components/TableList/index";
-export const getTableColumn = (fields: TableListFields[]): TableColumnProps[] => {
-  return fields
+import type { TableListField, Action } from "~/app/_components/TableList/index";
+import type { FormItem } from "~/app/_components/Form";
+export const getTableColumn = (
+  items: Array<TableListField | TableListField[]>,
+): TableColumnProps[] => {
+  const flatData = items.flat(Infinity) as TableListField[];
+  return flatData
     .filter((it) => it.table)
     .map((it) => {
       let output: TableColumnProps = { title: it.label, dataIndex: it.name };
@@ -31,4 +35,18 @@ export const getTableActions = (
   }
 
   return output;
+};
+
+export const getTableFormItems = (
+  items: Array<TableListField | TableListField[]>,
+): Array<FormItem | FormItem[]> => {
+  return items.map((it: TableListField | TableListField[]) => {
+    if (Array.isArray(it)) {
+      let res: FormItem[] = [];
+      res = getTableFormItems(it) as FormItem[];
+      return res;
+    }
+    const { table, ...rest } = it;
+    return rest;
+  });
 };
