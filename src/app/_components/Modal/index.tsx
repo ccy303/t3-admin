@@ -1,6 +1,6 @@
 "use client";
 import { Modal } from "antd";
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { createStyles } from "antd-style";
 
 import type { ModalProps } from "antd";
@@ -23,14 +23,23 @@ const useStyles = createStyles(({ css, token }) => {
   };
 });
 
-export default React.forwardRef(
+const modal = React.forwardRef(
   ({ children, ...modalProps }: Readonly<{ children: React.ReactNode } & ModalProps>, ref) => {
     const [open, setOpen] = useState(false);
     const { styles } = useStyles();
 
+    const openCallback = useRef<any>(null);
+    const closeCallback = useRef<any>(null);
+
     React.useImperativeHandle(ref, () => ({
-      open: () => setOpen(true),
-      close: () => setOpen(false),
+      open: (callBack: any) => {
+        openCallback.current = callBack;
+        setOpen(true);
+      },
+      close: (callBack: any) => {
+        closeCallback.current = callBack;
+        setOpen(false);
+      },
     }));
 
     // -----------modalProps beign-----------
@@ -61,6 +70,10 @@ export default React.forwardRef(
           body: styles.modalBody,
           footer: styles.modalFooter,
         }}
+        afterOpenChange={(open) => {
+          if (open) openCallback.current?.();
+          else closeCallback.current?.();
+        }}
         {...other}
       >
         {children}
@@ -68,3 +81,11 @@ export default React.forwardRef(
     );
   },
 );
+
+export default modal;
+
+export const confirm = Modal.confirm;
+export const info = Modal.info;
+export const success = Modal.success;
+export const error = Modal.error;
+export const warning = Modal.warning;

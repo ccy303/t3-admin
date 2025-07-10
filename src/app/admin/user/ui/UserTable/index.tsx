@@ -18,6 +18,7 @@ export default function UserTable(props: any) {
             required: true,
             labelCol: { span: 6 },
             table: true,
+            search: { operator: "equals" },
           },
           {
             label: "昵称",
@@ -26,10 +27,11 @@ export default function UserTable(props: any) {
             required: true,
             labelCol: { span: 6 },
             table: true,
+            search: true,
           },
         ],
-        { label: "手机号", type: "input", name: "phone_number", required: true, table: true },
-        { label: "邮箱", type: "input", name: "email", required: true, table: true },
+        { label: "手机号", type: "input", name: "phone_number", required: true, table: true, search: { span: 10 } },
+        { label: "邮箱", type: "input", name: "email1", required: true, table: true, search: true },
       ],
     },
     // actions: [
